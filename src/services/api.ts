@@ -1,7 +1,7 @@
 import { Attraction, ElectricalPlan, MaintenanceRecord, User } from '../types';
 import { mockAttractions, mockMaintenanceRecords, mockPlans } from '../data/mockData';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'https://parque-cafe-api.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL ?? 'https://parque-cafe-api.onrender.com/api';
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 type ApiResponse<T> = { data: T };
