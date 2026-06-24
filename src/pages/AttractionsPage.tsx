@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Grid,
   Card,
   CardContent,
-  CardMedia,
   CardActions,
   Typography,
   Chip,
@@ -36,10 +35,13 @@ import {
   Add,
   Edit,
   Delete,
+  PhotoCamera,
+  Close as CloseIcon,
+  ImageOutlined,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { AttractionStatus, ParkArea, Attraction } from '../types';
-import { api } from '../services/api';
+import { api, resolveFileUrl } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const statusConfig: Record<AttractionStatus, { color: string; label: string; dotColor: string }> = {
@@ -66,12 +68,16 @@ const emptyForm = {
   description: '',
   manufacturer: '',
   model: '',
+  year_installed: new Date().getFullYear(),
   installed_power_kw: 0,
+  operating_voltage_v: '220',
+  control_voltage_v: 24,
+  frequency_hz: 60,
+  protection_ip: 'IP65',
   capacity: 0,
   height_m: 0,
   duration_min: 0,
   total_plans: 0,
-  pending_docs: 0,
 };
 
 const parkAreas: ParkArea[] = [
@@ -127,7 +133,7 @@ const AttractionCard: React.FC<{
       {/* Image / icon header */}
       <Box
         sx={{
-          height: 140,
+          height: 160,
           background: `linear-gradient(135deg, ${areaColor}88, ${areaColor}55)`,
           display: 'flex',
           alignItems: 'center',
@@ -136,13 +142,35 @@ const AttractionCard: React.FC<{
           overflow: 'hidden',
         }}
       >
+        {/* Fondo decorativo */}
         <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1,
           backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)',
           backgroundSize: '12px 12px',
         }} />
-        <Typography sx={{ fontSize: '4rem', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}>
-          {iconMap[attraction.name] || '⚙️'}
-        </Typography>
+
+        {/* Imagen real o emoji de fallback */}
+        {attraction.image ? (
+          <Box
+            component="img"
+            src={resolveFileUrl(attraction.image)}
+            alt={attraction.name}
+            sx={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.3s ease',
+              '&:hover': { transform: 'scale(1.05)' },
+            }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ) : (
+          <Typography sx={{ fontSize: '4rem', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}>
+            {iconMap[attraction.name] || '⚙️'}
+          </Typography>
+        )}
+
         <Chip
           label={sCfg.label}
           size="small"
@@ -162,7 +190,7 @@ const AttractionCard: React.FC<{
             position: 'absolute',
             top: 8,
             left: 8,
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: 'rgba(0,0,0,0.5)',
             color: 'white',
             fontWeight: 500,
             fontSize: '0.65rem',
@@ -293,6 +321,10 @@ const AttractionsPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Attraction | null>(null);
   const [formData, setFormData] = useState(emptyForm);
+  // Image state
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const canManage = hasPermission('manage_attractions');
 
   useEffect(() => {
@@ -316,6 +348,8 @@ const AttractionsPage: React.FC = () => {
   const openCreate = () => {
     setEditing(null);
     setFormData(emptyForm);
+    setImageFile(null);
+    setImagePreview('');
     setDialogOpen(true);
   };
 
@@ -329,14 +363,34 @@ const AttractionsPage: React.FC = () => {
       description: attraction.description,
       manufacturer: attraction.technical_specs.manufacturer,
       model: attraction.technical_specs.model,
-      installed_power_kw: attraction.technical_specs.installed_power_kw,
+      year_installed: attraction.technical_specs.year_installed || new Date().getFullYear(),
+      installed_power_kw: attraction.technical_specs.installed_power_kw || 0,
+      operating_voltage_v: attraction.technical_specs.operating_voltage_v?.join(',') || '220',
+      control_voltage_v: attraction.technical_specs.control_voltage_v || 24,
+      frequency_hz: attraction.technical_specs.frequency_hz || 60,
+      protection_ip: attraction.technical_specs.protection_ip || 'IP65',
       capacity: attraction.capacity,
       height_m: attraction.height_m,
       duration_min: attraction.duration_min,
       total_plans: attraction.total_plans,
-      pending_docs: attraction.pending_docs,
     });
+    setImageFile(null);
+    // Mostrar imagen actual de la atraccion como preview
+    setImagePreview(attraction.image ? resolveFileUrl(attraction.image) : '');
     setDialogOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const toPayload = () => ({
@@ -349,16 +403,15 @@ const AttractionsPage: React.FC = () => {
     height_m: Number(formData.height_m),
     duration_min: Number(formData.duration_min),
     total_plans: Number(formData.total_plans),
-    pending_docs: Number(formData.pending_docs),
     technical_specs: {
       manufacturer: formData.manufacturer || 'Sin registrar',
       model: formData.model || 'Sin registrar',
-      year_installed: editing?.technical_specs.year_installed ?? new Date().getFullYear(),
+      year_installed: Number(formData.year_installed) || new Date().getFullYear(),
       installed_power_kw: Number(formData.installed_power_kw),
-      operating_voltage_v: editing?.technical_specs.operating_voltage_v ?? [220],
-      control_voltage_v: editing?.technical_specs.control_voltage_v ?? 24,
-      frequency_hz: editing?.technical_specs.frequency_hz ?? 60,
-      protection_ip: editing?.technical_specs.protection_ip ?? 'N/A',
+      operating_voltage_v: formData.operating_voltage_v.split(',').map(v => Number(v.trim())).filter(n => !isNaN(n)),
+      control_voltage_v: Number(formData.control_voltage_v),
+      frequency_hz: Number(formData.frequency_hz),
+      protection_ip: formData.protection_ip || 'N/A',
       motors: editing?.technical_specs.motors ?? [],
       vfds: editing?.technical_specs.vfds ?? [],
       plcs: editing?.technical_specs.plcs ?? [],
@@ -371,8 +424,8 @@ const AttractionsPage: React.FC = () => {
     if (!formData.name || !formData.code) return;
     try {
       const saved = editing
-        ? await api.updateAttraction(editing.id, toPayload())
-        : await api.createAttraction(toPayload());
+        ? await api.updateAttraction(editing.id, toPayload(), imageFile ?? undefined)
+        : await api.createAttraction(toPayload(), imageFile ?? undefined);
 
       setAttractions(prev => editing
         ? prev.map(item => item.id === saved.id ? saved : item)
@@ -384,6 +437,9 @@ const AttractionsPage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'No se pudo guardar la atraccion');
     }
   };
+
+  const uploadedPlansCount = editing ? Math.max(editing.total_plans - editing.pending_docs, 0) : 0;
+  const calculatedPendingDocs = Math.max(Number(formData.total_plans) - uploadedPlansCount, 0);
 
   const deleteAttraction = async (attraction: Attraction) => {
     const confirmed = window.confirm(`Eliminar ${attraction.name}?`);
@@ -484,6 +540,97 @@ const AttractionsPage: React.FC = () => {
         <DialogTitle>{editing ? 'Editar atraccion' : 'Nueva atraccion'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0 }}>
+
+            {/* ── Zona de imagen ── */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  border: '2px dashed',
+                  borderColor: imagePreview ? 'primary.main' : 'divider',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  minHeight: 160,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: imagePreview ? 'transparent' : 'action.hover',
+                  transition: 'border-color 0.2s',
+                  cursor: 'pointer',
+                  '&:hover': { borderColor: 'primary.main' },
+                }}
+                onClick={() => imageInputRef.current?.click()}
+              >
+                {imagePreview ? (
+                  <>
+                    <Box
+                      component="img"
+                      src={imagePreview}
+                      alt="Preview"
+                      sx={{
+                        width: '100%',
+                        maxHeight: 220,
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                    {/* Overlay de hover */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        bgcolor: 'rgba(0,0,0,0.45)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 2,
+                        opacity: 0,
+                        transition: 'opacity 0.2s',
+                        '&:hover': { opacity: 1 },
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        startIcon={<PhotoCamera />}
+                        size="small"
+                        onClick={e => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                      >
+                        Cambiar
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<CloseIcon />}
+                        size="small"
+                        onClick={e => { e.stopPropagation(); clearImage(); }}
+                        sx={{ bgcolor: 'rgba(255,255,255,0.9)' }}
+                      >
+                        Quitar
+                      </Button>
+                    </Box>
+                  </>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 3, pointerEvents: 'none' }}>
+                    <ImageOutlined sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                      Haz clic para seleccionar una imagen
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      JPG, PNG o WEBP · máx. 10 MB
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleImageChange}
+              />
+            </Grid>
+
+            {/* ── Campos del formulario ── */}
             <Grid item xs={12} sm={6}>
               <TextField fullWidth size="small" label="Nombre" value={formData.name} onChange={e => setFormData(d => ({ ...d, name: e.target.value }))} />
             </Grid>
@@ -518,13 +665,27 @@ const AttractionsPage: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField fullWidth size="small" label="Modelo" value={formData.model} onChange={e => setFormData(d => ({ ...d, model: e.target.value }))} />
             </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" label="Año Instalación" type="number" value={formData.year_installed} onChange={e => setFormData(d => ({ ...d, year_installed: Number(e.target.value) }))} />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" label="Frecuencia (Hz)" type="number" value={formData.frequency_hz} onChange={e => setFormData(d => ({ ...d, frequency_hz: Number(e.target.value) }))} />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" label="Protección IP" value={formData.protection_ip} onChange={e => setFormData(d => ({ ...d, protection_ip: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Voltaje Operación (V) ej: 220,440" value={formData.operating_voltage_v} onChange={e => setFormData(d => ({ ...d, operating_voltage_v: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Voltaje Control (V)" type="number" value={formData.control_voltage_v} onChange={e => setFormData(d => ({ ...d, control_voltage_v: Number(e.target.value) }))} />
+            </Grid>
             {[
               ['installed_power_kw', 'Potencia instalada (kW)'],
               ['capacity', 'Capacidad'],
               ['height_m', 'Altura (m)'],
               ['duration_min', 'Duracion (min)'],
               ['total_plans', 'Total planos'],
-              ['pending_docs', 'Planos pendientes'],
             ].map(([key, label]) => (
               <Grid key={key} item xs={12} sm={6} md={4}>
                 <TextField
@@ -537,6 +698,16 @@ const AttractionsPage: React.FC = () => {
                 />
               </Grid>
             ))}
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Planos pendientes"
+                value={calculatedPendingDocs}
+                InputProps={{ readOnly: true }}
+                helperText={editing ? `${uploadedPlansCount} planos ingresados` : 'Se calculara al guardar'}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>

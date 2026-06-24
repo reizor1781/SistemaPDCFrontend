@@ -38,6 +38,7 @@ import {
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { resolveFileUrl } from '../services/api';
 
 const DRAWER_WIDTH = 260;
 const COLLAPSED_WIDTH = 72;
@@ -316,6 +317,7 @@ const AppLayout: React.FC = () => {
             <Tooltip title="Mi cuenta">
               <IconButton size="small" onClick={e => setAnchorEl(e.currentTarget)}>
                 <Avatar
+                  src={user?.avatar ? resolveFileUrl(user.avatar) : undefined}
                   sx={{
                     width: 32,
                     height: 32,
@@ -342,7 +344,7 @@ const AppLayout: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
               </Box>
               <Divider />
-              <MenuItem onClick={() => setAnchorEl(null)}>
+              <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
                 <ListItemIcon><Person fontSize="small" /></ListItemIcon>
                 Mi Perfil
               </MenuItem>

@@ -15,6 +15,7 @@ import PlanViewerPage, { PlanViewerIndexPage } from './pages/PlanViewerPage';
 import PlansManagementPage from './pages/PlansManagementPage';
 import SearchPage from './pages/SearchPage';
 import UsersPage from './pages/UsersPage';
+import ProfilePage from './pages/ProfilePage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -91,6 +92,7 @@ const AppRoutes: React.FC = () => {
                   </PermissionRoute>
                 }
               />
+              <Route path="profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

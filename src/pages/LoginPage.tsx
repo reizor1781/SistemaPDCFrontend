@@ -12,6 +12,7 @@ import {
   Chip,
   Divider,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import {
   Email,
@@ -24,10 +25,10 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const mockAccounts = [
-  { email: 'admin@parquedelcafe.com', password: 'admin123', role: 'Administrador', color: '#f44336' },
-  { email: 'ingeniero@parquedelcafe.com', password: 'ing123', role: 'Ingeniero', color: '#2196f3' },
-  { email: 'tecnico@parquedelcafe.com', password: 'tec123', role: 'Técnico', color: '#ff9800' },
-  { email: 'operador@parquedelcafe.com', password: 'op123', role: 'Operador', color: '#4caf50' },
+  { email: 'admin@parquedelcafe.com', password: 'admin123', role: 'Administrador', color: '#f44336', description: 'Acceso total al sistema' },
+  { email: 'ingeniero@parquedelcafe.com', password: 'ing123', role: 'Ingeniero', color: '#2196f3', description: 'Crea y edita planos y atracciones' },
+  { email: 'tecnico@parquedelcafe.com', password: 'tec123', role: 'Técnico', color: '#ff9800', description: 'Gestión de mantenimiento' },
+  { email: 'operador@parquedelcafe.com', password: 'op123', role: 'Operador', color: '#4caf50', description: 'Solo lectura' },
 ];
 
 const LoginPage: React.FC = () => {
@@ -50,9 +51,14 @@ const LoginPage: React.FC = () => {
     setLoading(false);
   };
 
-  const quickLogin = (acc: typeof mockAccounts[0]) => {
-    setEmail(acc.email);
-    setPassword(acc.password);
+  const quickLogin = async (acc: typeof mockAccounts[0]) => {
+    setLoading(true);
+    setError('');
+    const result = await login(acc.email, acc.password);
+    if (!result.success) {
+      setError(result.error || 'Error de autenticación');
+    }
+    setLoading(false);
   };
 
   return (
@@ -244,19 +250,47 @@ const LoginPage: React.FC = () => {
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
             {mockAccounts.map(acc => (
-              <Chip
+              <Tooltip
                 key={acc.email}
-                label={acc.role}
-                size="small"
-                onClick={() => quickLogin(acc)}
-                sx={{
-                  cursor: 'pointer',
-                  borderColor: acc.color,
-                  color: acc.color,
-                  '&:hover': { background: `${acc.color}22` },
-                }}
-                variant="outlined"
-              />
+                title={
+                  <Box sx={{ p: 0.5 }}>
+                    <Typography variant="caption" display="block" fontWeight={700} sx={{ color: acc.color }}>
+                      {acc.role}
+                    </Typography>
+                    <Typography variant="caption" display="block" sx={{ opacity: 0.85 }}>
+                      {acc.description}
+                    </Typography>
+                    <Divider sx={{ my: 0.5, borderColor: 'rgba(255,255,255,0.2)' }} />
+                    <Typography variant="caption" display="block" sx={{ opacity: 0.7, fontFamily: 'monospace', fontSize: '0.7rem' }}>
+                      {acc.email}
+                    </Typography>
+                    <Typography variant="caption" display="block" sx={{ opacity: 0.7, fontFamily: 'monospace', fontSize: '0.7rem' }}>
+                      🔑 {acc.password}
+                    </Typography>
+                  </Box>
+                }
+                arrow
+                placement="top"
+              >
+                <Chip
+                  label={acc.role}
+                  size="small"
+                  onClick={() => quickLogin(acc)}
+                  disabled={loading}
+                  sx={{
+                    cursor: 'pointer',
+                    borderColor: acc.color,
+                    color: acc.color,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      background: `${acc.color}22`,
+                      transform: 'translateY(-1px)',
+                      boxShadow: `0 4px 12px ${acc.color}44`,
+                    },
+                  }}
+                  variant="outlined"
+                />
+              </Tooltip>
             ))}
           </Box>
 

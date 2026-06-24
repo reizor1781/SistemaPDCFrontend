@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   hasPermission: (action: string) => boolean;
+  updateProfile: (data: { name?: string; password?: string }, avatarFile?: File) => Promise<void>;
 }
 
 const rolePermissions: Record<UserRole, string[]> = {
@@ -55,8 +56,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return rolePermissions[user.role]?.includes(action) ?? false;
   }, [user]);
 
+  const updateProfile = useCallback(async (data: { name?: string; password?: string }, avatarFile?: File) => {
+    const updated = await api.updateMe(data, avatarFile);
+    setUser(updated);
+    localStorage.setItem('pcp_user', JSON.stringify(updated));
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user && !!token, login, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user && !!token, login, logout, hasPermission, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

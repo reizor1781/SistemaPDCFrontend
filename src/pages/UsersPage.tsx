@@ -44,7 +44,7 @@ import {
 } from '@mui/icons-material';
 import { User, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import { api, resolveFileUrl } from '../services/api';
 
 const roleConfig: Record<UserRole, { label: string; icon: React.ReactNode; color: string; permissions: string[] }> = {
   admin: {
@@ -80,6 +80,8 @@ const UsersPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', role: 'technician' as UserRole, department: '', active: true, password: '' });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -95,11 +97,20 @@ const UsersPage: React.FC = () => {
     if (user) {
       setEditUser(user);
       setFormData({ name: user.name, email: user.email, role: user.role, department: user.department, active: user.active, password: '' });
+      setAvatarPreview(user.avatar ? resolveFileUrl(user.avatar) : '');
     } else {
       setEditUser(null);
       setFormData({ name: '', email: '', role: 'technician', department: '', active: true, password: '' });
+      setAvatarPreview('');
     }
+    setAvatarFile(null);
     setDialogOpen(true);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setAvatarFile(file);
+    setAvatarPreview(file ? URL.createObjectURL(file) : (editUser?.avatar ? resolveFileUrl(editUser.avatar) : ''));
   };
 
   const userPayload = () => {
@@ -111,11 +122,11 @@ const UsersPage: React.FC = () => {
     setErrorMsg('');
     try {
       if (editUser) {
-        const saved = await api.updateUser(editUser.id, userPayload());
+        const saved = await api.updateUser(editUser.id, userPayload(), avatarFile ?? undefined);
         setUsers(prev => prev.map(u => u.id === saved.id ? saved : u));
         setSuccessMsg('Usuario actualizado correctamente.');
       } else {
-        const created = await api.createUser(userPayload());
+        const created = await api.createUser(userPayload(), avatarFile ?? undefined);
         setUsers(prev => [...prev, created]);
         setSuccessMsg('Usuario creado correctamente.');
       }
@@ -232,9 +243,11 @@ const UsersPage: React.FC = () => {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar
+                        src={u.avatar ? resolveFileUrl(u.avatar) : undefined}
+                        alt={u.name}
                         sx={{ width: 36, height: 36, bgcolor: `${rCfg.color}22`, color: rCfg.color, fontSize: 14, fontWeight: 700 }}
                       >
-                        {u.name.charAt(0)}
+                        {!u.avatar && u.name.charAt(0)}
                       </Avatar>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
@@ -322,6 +335,32 @@ const UsersPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0 }}>
+            <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+              <Avatar
+                src={avatarPreview || undefined}
+                alt={formData.name || 'Usuario'}
+                sx={{
+                  width: 72,
+                  height: 72,
+                  bgcolor: `${roleConfig[formData.role].color}22`,
+                  color: roleConfig[formData.role].color,
+                  fontSize: 28,
+                  fontWeight: 700,
+                }}
+              >
+                {!avatarPreview && (formData.name.charAt(0) || 'U')}
+              </Avatar>
+              <Button variant="outlined" component="label" size="small">
+                {avatarPreview ? 'Cambiar Foto' : 'Subir Foto'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                />
+              </Button>
+              {avatarFile && <Typography variant="caption">{avatarFile.name}</Typography>}
+            </Grid>
             <Grid item xs={12}>
               <TextField fullWidth size="small" label="Nombre completo *" value={formData.name} onChange={e => setFormData(d => ({ ...d, name: e.target.value }))} />
             </Grid>

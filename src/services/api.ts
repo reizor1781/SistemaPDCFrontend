@@ -114,19 +114,50 @@ export const api = {
     return enrichAttraction(response.data);
   },
 
-  async createAttraction(data: Partial<Attraction>) {
-    const response = await request<ApiResponse<Partial<Attraction> & { id: string }>>('/attractions', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async createAttraction(data: Partial<Attraction>, imageFile?: File) {
+    let response: ApiResponse<Partial<Attraction> & { id: string }>;
+    if (imageFile) {
+      const formData = new FormData();
+      formData.set('image', imageFile);
+      // Serializar cada campo del objeto en el form
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+        }
+      });
+      response = await request<ApiResponse<Partial<Attraction> & { id: string }>>('/attractions', {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      response = await request<ApiResponse<Partial<Attraction> & { id: string }>>('/attractions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    }
     return enrichAttraction(response.data);
   },
 
-  async updateAttraction(id: string, data: Partial<Attraction>) {
-    const response = await request<ApiResponse<Partial<Attraction> & { id: string }>>(`/attractions/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  async updateAttraction(id: string, data: Partial<Attraction>, imageFile?: File) {
+    let response: ApiResponse<Partial<Attraction> & { id: string }>;
+    if (imageFile) {
+      const formData = new FormData();
+      formData.set('image', imageFile);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+        }
+      });
+      response = await request<ApiResponse<Partial<Attraction> & { id: string }>>(`/attractions/${id}`, {
+        method: 'PUT',
+        body: formData,
+      });
+    } else {
+      response = await request<ApiResponse<Partial<Attraction> & { id: string }>>(`/attractions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
     return enrichAttraction(response.data);
   },
 
@@ -166,7 +197,16 @@ export const api = {
     return response.data;
   },
 
-  async createUser(data: Partial<User> & { password?: string }) {
+  async createUser(data: Partial<User> & { password?: string }, avatarFile?: File) {
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.set('avatar', avatarFile);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) formData.set(key, String(value));
+      });
+      const response = await request<ApiResponse<User>>('/users', { method: 'POST', body: formData });
+      return response.data;
+    }
     const response = await request<ApiResponse<User>>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -174,7 +214,16 @@ export const api = {
     return response.data;
   },
 
-  async updateUser(id: string, data: Partial<User> & { password?: string }) {
+  async updateUser(id: string, data: Partial<User> & { password?: string }, avatarFile?: File) {
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.set('avatar', avatarFile);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) formData.set(key, String(value));
+      });
+      const response = await request<ApiResponse<User>>(`/users/${id}`, { method: 'PUT', body: formData });
+      return response.data;
+    }
     const response = await request<ApiResponse<User>>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -183,9 +232,28 @@ export const api = {
   },
 
   async deleteUser(id: string) {
-    await request<ApiResponse<User>>(`/users/${id}`, {
-      method: 'DELETE',
+    await request<ApiResponse<User>>(`/users/${id}`, { method: 'DELETE' });
+  },
+
+  async getMe() {
+    const response = await request<{ user: User }>('/auth/me');
+    return response.user;
+  },
+
+  async updateMe(data: { name?: string; password?: string }, avatarFile?: File) {
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.set('avatar', avatarFile);
+      if (data.name) formData.set('name', data.name);
+      if (data.password) formData.set('password', data.password);
+      const response = await request<{ user: User }>('/auth/me', { method: 'PUT', body: formData });
+      return response.user;
+    }
+    const response = await request<{ user: User }>('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
+    return response.user;
   },
 
   async getMaintenance(attractionId?: string) {
@@ -211,6 +279,28 @@ export const api = {
       body: formData,
     });
 
+    return enrichPlan(response.data);
+  },
+
+  async addComment(planId: string, content: string, pageRef?: number) {
+    const response = await request<ApiResponse<Partial<ElectricalPlan> & { id: string }>>(`/plans/${planId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content, pageRef }),
+    });
+    return enrichPlan(response.data);
+  },
+
+  async resolveComment(planId: string, commentId: string) {
+    const response = await request<ApiResponse<Partial<ElectricalPlan> & { id: string }>>(`/plans/${planId}/comments/${commentId}/resolve`, {
+      method: 'PATCH',
+    });
+    return enrichPlan(response.data);
+  },
+
+  async deleteComment(planId: string, commentId: string) {
+    const response = await request<ApiResponse<Partial<ElectricalPlan> & { id: string }>>(`/plans/${planId}/comments/${commentId}`, {
+      method: 'DELETE',
+    });
     return enrichPlan(response.data);
   },
 };

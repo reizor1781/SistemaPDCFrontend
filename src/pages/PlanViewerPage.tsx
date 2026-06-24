@@ -122,19 +122,15 @@ const PlanViewerPage: React.FC = () => {
     }
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim() || !user) return;
-    const comment: CommentType = {
-      id: `c-${Date.now()}`,
-      user_id: user.id,
-      user_name: user.name,
-      user_role: user.role,
-      content: newComment,
-      date: new Date().toISOString(),
-      resolved: false,
-    };
-    setComments(prev => [...prev, comment]);
-    setNewComment('');
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !user || !planId) return;
+    try {
+      const updatedPlan = await api.addComment(planId, newComment, currentPage);
+      setComments(updatedPlan.comments || []);
+      setNewComment('');
+    } catch (err) {
+      console.error('Error al agregar comentario:', err);
+    }
   };
 
   const SIDEBAR_WIDTH = 280;
