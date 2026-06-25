@@ -66,7 +66,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a1',
     name: 'Montaña Rusa',
     code: 'MR-001',
-    area: 'Zona Extrema',
+    area: 'Vertigo',
     status: 'operational',
     description:
       'Atracción principal del parque. Circuito de alta velocidad con inversiones y caídas pronunciadas. Capacidad para 24 pasajeros por ciclo.',
@@ -114,7 +114,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a2',
     name: 'Tren del Café',
     code: 'TC-001',
-    area: 'Zona Cultural',
+    area: 'Familiares',
     status: 'operational',
     description:
       'Recorrido turístico por el interior del parque con temática cafetera. Capacidad para 40 pasajeros. Experiencia educativa sobre la cultura del café colombiano.',
@@ -157,7 +157,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a3',
     name: 'Rápidos del Río',
     code: 'RR-001',
-    area: 'Zona Aventura',
+    area: 'Acuaticas',
     status: 'maintenance',
     description:
       'Atracción acuática de alta emoción. Botes circulares en canal de agua con rápidos y cascadas artificiales. Capacidad 6 personas por bote.',
@@ -203,7 +203,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a4',
     name: 'Carrusel Clásico',
     code: 'CC-001',
-    area: 'Zona Infantil',
+    area: 'Familiares',
     status: 'operational',
     description:
       'Carrusel tradicional con caballos de madera pintados a mano. Atracción familiar con música en vivo. Capacidad para 32 pasajeros.',
@@ -246,7 +246,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a5',
     name: 'Teleférico',
     code: 'TF-001',
-    area: 'Zona Familiar',
+    area: 'Familiares',
     status: 'operational',
     description:
       'Sistema de telecabinas con vista panorámica de los cafetales y montañas del Quindío. 12 cabinas con capacidad de 6 personas cada una.',
@@ -292,7 +292,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a6',
     name: 'Torre Mirador',
     code: 'TM-001',
-    area: 'Zona Aventura',
+    area: 'Vertigo',
     status: 'operational',
     description:
       'Torre de caída libre de 60 metros de altura. Aceleración de 0 a 120 km/h en caída controlada. Máxima adrenalina con vista panorámica incomparable.',
@@ -336,7 +336,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a7',
     name: 'Sillas Voladoras',
     code: 'SV-001',
-    area: 'Zona Familiar',
+    area: 'Familiares',
     status: 'inspection',
     description:
       'Clásica atracción de sillas colgantes con rotación y elevación. Apta para toda la familia. Capacidad para 24 sillas.',
@@ -380,7 +380,7 @@ export const mockAttractions: Attraction[] = [
     id: 'a8',
     name: 'Splash Acuático',
     code: 'SA-001',
-    area: 'Zona Aventura',
+    area: 'Acuaticas',
     status: 'operational',
     description:
       'Deslizamiento acuático en canoa por canal inclinado con gran salpicada final. Atracción refrescante para días calurosos. Capacidad 4 personas por canoa.',
