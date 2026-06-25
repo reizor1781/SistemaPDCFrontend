@@ -13,8 +13,8 @@ interface AuthContextType {
 }
 
 const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['view_all', 'upload_plans', 'delete_plans', 'manage_users', 'manage_attractions', 'approve_plans', 'edit_specs', 'add_comments', 'view_maintenance', 'manage_maintenance'],
-  engineer: ['view_all', 'upload_plans', 'manage_attractions', 'approve_plans', 'edit_specs', 'add_comments', 'view_maintenance', 'manage_maintenance'],
+  admin: ['view_all', 'upload_plans', 'delete_plans', 'manage_manuals', 'manage_users', 'manage_attractions', 'approve_plans', 'edit_specs', 'add_comments', 'view_maintenance', 'manage_maintenance'],
+  engineer: ['view_all', 'upload_plans', 'manage_manuals', 'manage_attractions', 'approve_plans', 'edit_specs', 'add_comments', 'view_maintenance', 'manage_maintenance'],
   technician: ['view_all', 'add_comments', 'view_maintenance', 'manage_maintenance'],
   operator: ['view_all'],
 };

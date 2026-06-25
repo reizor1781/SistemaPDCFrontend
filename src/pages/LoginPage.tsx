@@ -122,11 +122,8 @@ const LoginPage: React.FC = () => {
           <Typography variant="h2" sx={{ fontWeight: 800, color: '#f5c518', mb: 1, fontSize: '2.5rem' }}>
             Parque del Café
           </Typography>
-          <Typography variant="h5" sx={{ color: 'rgba(255,255,255,0.85)', mb: 1, fontWeight: 300 }}>
-            Sistema de Gestión de
-          </Typography>
           <Typography variant="h4" sx={{ color: '#a8d5a2', fontWeight: 700, mb: 4 }}>
-            Planos Eléctricos
+            Sistema de Gestión de Documentos
           </Typography>
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.15)', mb: 4 }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
@@ -181,7 +178,7 @@ const LoginPage: React.FC = () => {
               </Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Sistema de Planos Eléctricos — Acceso seguro
+              Sistema de Gestión de documentos — Acceso seguro
             </Typography>
           </Box>
 

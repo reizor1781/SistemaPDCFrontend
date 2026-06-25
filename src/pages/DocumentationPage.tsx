@@ -34,6 +34,7 @@ import {
   Speed,
   Sensors,
   PictureAsPdf,
+  MenuBook,
   Build,
   CheckCircle,
   Warning,
@@ -44,7 +45,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Attraction, AttractionStatus, ElectricalPlan, MaintenanceRecord, PlanType, MaintenanceType, MaintenanceStatus } from '../types';
+import { Attraction, AttractionManual, AttractionStatus, ElectricalPlan, MaintenanceRecord, PlanType, MaintenanceType, MaintenanceStatus, ManualCategory } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -73,6 +74,11 @@ const planStatusColors: Record<string, string> = {
   draft: '#757575',
   review: '#0288d1',
   obsolete: '#f44336',
+};
+
+const manualCategoryLabels: Record<ManualCategory, string> = {
+  operation: 'Operacion',
+  maintenance: 'Mantenimiento',
 };
 
 const mntTypeLabels: Record<MaintenanceType, string> = {
@@ -105,6 +111,7 @@ const DocumentationPage: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [attraction, setAttraction] = useState<Attraction | null>(null);
   const [plans, setPlans] = useState<ElectricalPlan[]>([]);
+  const [manuals, setManuals] = useState<AttractionManual[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -112,10 +119,11 @@ const DocumentationPage: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([api.getAttraction(id), api.getPlans(id), api.getMaintenance(id)])
-      .then(([loadedAttraction, loadedPlans, loadedMaintenance]) => {
+    Promise.all([api.getAttraction(id), api.getPlans(id), api.getManuals(id), api.getMaintenance(id)])
+      .then(([loadedAttraction, loadedPlans, loadedManuals, loadedMaintenance]) => {
         setAttraction(loadedAttraction);
         setPlans(loadedPlans);
+        setManuals(loadedManuals);
         setMaintenance(loadedMaintenance);
       })
       .catch(err => setError(err instanceof Error ? err.message : 'No se pudo cargar la documentacion'))
@@ -171,8 +179,13 @@ const DocumentationPage: React.FC = () => {
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {hasPermission('upload_plans') && (
-            <Button variant="outlined" startIcon={<Add />} size="small">
+            <Button variant="outlined" startIcon={<Add />} size="small" onClick={() => navigate('/plans')}>
               Nuevo Plano
+            </Button>
+          )}
+          {hasPermission('upload_plans') && (
+            <Button variant="outlined" startIcon={<Add />} size="small" onClick={() => navigate('/manuals')}>
+              Nuevo Manual
             </Button>
           )}
         </Box>
@@ -189,6 +202,7 @@ const DocumentationPage: React.FC = () => {
         >
           <Tab label="Información General" />
           <Tab label={<Badge badgeContent={plans.length} color="primary">Planos Eléctricos</Badge>} />
+          <Tab label={<Badge badgeContent={manuals.length} color="info">Manuales</Badge>} />
           <Tab label="Componentes Eléctricos" />
           <Tab label={<Badge badgeContent={maintenance.length} color="warning">Mantenimiento</Badge>} />
         </Tabs>
@@ -327,8 +341,83 @@ const DocumentationPage: React.FC = () => {
             )}
           </TabPanel>
 
-          {/* Tab 2 - Electrical Components */}
+          {/* Tab 2 - Manuals */}
           <TabPanel value={tab} index={2}>
+            {manuals.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <MenuBook sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                <Typography color="text.secondary">No hay manuales registrados para esta atraccion.</Typography>
+              </Box>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><Typography variant="caption" fontWeight={700}>N Manual</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Título</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Categoria</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Version</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Estado</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Actualizado</Typography></TableCell>
+                    <TableCell><Typography variant="caption" fontWeight={700}>Paginas</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="caption" fontWeight={700}>Acción</Typography></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {manuals.map(manual => (
+                    <TableRow key={manual.id} hover>
+                      <TableCell>
+                        <Typography variant="caption" sx={{ fontFamily: 'monospace', bgcolor: theme.palette.divider, px: 0.8, py: 0.3, borderRadius: 1 }}>
+                          {manual.manual_number}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>{manual.title}</Typography>
+                        {manual.description && (
+                          <Typography variant="caption" color="text.secondary">{manual.description}</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption">{manualCategoryLabels[manual.category]}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{manual.current_version}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={manual.status === 'active' ? 'Activo' : manual.status === 'review' ? 'Revision' : manual.status === 'draft' ? 'Borrador' : 'Obsoleto'}
+                          size="small"
+                          color={manual.status === 'active' ? 'success' : manual.status === 'obsolete' ? 'error' : 'default'}
+                          sx={{ fontWeight: 600, fontSize: '0.65rem' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" color="text.secondary">
+                          {format(new Date(manual.updated_date), 'dd/MM/yyyy')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption">{manual.pages} pags.</Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<PictureAsPdf />}
+                          onClick={() => navigate(`/manual-viewer/${manual.id}`)}
+                          sx={{ fontSize: '0.7rem' }}
+                        >
+                          Abrir
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </TabPanel>
+
+          {/* Tab 3 - Electrical Components */}
+          <TabPanel value={tab} index={3}>
             <Grid container spacing={3}>
               {/* Motors */}
               <Grid item xs={12}>
@@ -455,8 +544,7 @@ const DocumentationPage: React.FC = () => {
             </Grid>
           </TabPanel>
 
-          {/* Tab 3 - Maintenance */}
-          <TabPanel value={tab} index={3}>
+           <TabPanel value={tab} index={4}>
             {maintenance.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Build sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
@@ -510,3 +598,4 @@ const DocumentationPage: React.FC = () => {
 };
 
 export default DocumentationPage;
+

@@ -246,8 +246,10 @@ const DashboardPage: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {recentAttractions.map(attr => {
                 const statusCfg = statusConfig[attr.status];
-                const docPercent = attr.total_plans > 0
-                  ? Math.round(((attr.total_plans - attr.pending_docs) / attr.total_plans) * 100)
+                const totalExpected = attr.total_plans + (attr.total_manuals || 0);
+                const uploadedDocs = totalExpected - attr.pending_docs;
+                const docPercent = totalExpected > 0
+                  ? Math.max(0, Math.min(100, Math.round((uploadedDocs / totalExpected) * 100)))
                   : 0;
                 return (
                   <Box
@@ -294,7 +296,7 @@ const DashboardPage: React.FC = () => {
                         {docPercent}%
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {attr.total_plans - attr.pending_docs}/{attr.total_plans} planos
+                        {uploadedDocs}/{totalExpected} documentos
                       </Typography>
                     </Box>
                   </Box>

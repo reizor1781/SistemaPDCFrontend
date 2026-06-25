@@ -22,16 +22,16 @@ const baseTokens = {
     cream: '#f5f0e8',
   },
   neutral: {
-    900: '#0f1109',
-    800: '#1a1f1a',
-    700: '#2a302a',
-    600: '#3d453d',
-    500: '#5a665a',
-    400: '#7a8a7a',
-    300: '#a0b0a0',
-    200: '#c8d8c8',
-    100: '#e8f0e8',
-    50: '#f4f8f4',
+    900: '#111827',
+    800: '#1f2937',
+    700: '#374151',
+    600: '#4b5563',
+    500: '#6b7280',
+    400: '#9ca3af',
+    300: '#d1d5db',
+    200: '#e5e7eb',
+    100: '#f3f4f6',
+    50: '#f9fafb',
   },
 };
 
@@ -70,7 +70,7 @@ export const lightTheme = createTheme({
       contrastText: '#1a1a00',
     },
     background: {
-      default: '#f0f4f0',
+      default: '#f8f9fa',
       paper: '#ffffff',
     },
     text: {
@@ -163,8 +163,8 @@ export const darkTheme = createTheme({
       contrastText: '#1a1a00',
     },
     background: {
-      default: '#0f140f',
-      paper: '#1a2018',
+      default: '#121212',
+      paper: '#1e1e1e',
     },
     text: {
       primary: '#e8f0e8',
@@ -195,16 +195,16 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          background: '#1a2018',
+          background: '#1e1e1e',
           boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
         },
         elevation1: {
           boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-          background: '#1e2620',
+          background: '#232323',
         },
         elevation2: {
           boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-          background: '#222a20',
+          background: '#282828',
         },
       },
     },
@@ -234,7 +234,7 @@ export const darkTheme = createTheme({
         root: {
           borderRadius: 16,
           overflow: 'hidden',
-          background: '#1e2620',
+          background: '#1e1e1e',
         },
       },
     },

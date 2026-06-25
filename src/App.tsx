@@ -13,6 +13,8 @@ import AttractionsPage from './pages/AttractionsPage';
 import DocumentationPage from './pages/DocumentationPage';
 import PlanViewerPage, { PlanViewerIndexPage } from './pages/PlanViewerPage';
 import PlansManagementPage from './pages/PlansManagementPage';
+import ManualsManagementPage from './pages/ManualsManagementPage';
+import ManualViewerPage from './pages/ManualViewerPage';
 import SearchPage from './pages/SearchPage';
 import UsersPage from './pages/UsersPage';
 import ProfilePage from './pages/ProfilePage';
@@ -75,11 +77,20 @@ const AppRoutes: React.FC = () => {
               <Route path="documentation/:id" element={<DocumentationPage />} />
               <Route path="viewer" element={<PlanViewerIndexPage />} />
               <Route path="viewer/:planId" element={<PlanViewerPage />} />
+              <Route path="manual-viewer/:manualId" element={<ManualViewerPage />} />
               <Route
                 path="plans"
                 element={
                   <PermissionRoute permission="upload_plans">
                     <PlansManagementPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="manuals"
+                element={
+                  <PermissionRoute permission="manage_manuals">
+                    <ManualsManagementPage />
                   </PermissionRoute>
                 }
               />

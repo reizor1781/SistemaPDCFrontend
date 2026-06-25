@@ -26,6 +26,7 @@ import {
   ManageAccounts,
   Search,
   Build,
+  MenuBook,
   LightMode,
   DarkMode,
   Logout,
@@ -49,6 +50,7 @@ const navItems = [
   { label: 'Documentación', icon: <Description />, path: '/documentation' },
   { label: 'Visor de Planos', icon: <PictureAsPdf />, path: '/viewer' },
   { label: 'Gestión de Planos', icon: <Build />, path: '/plans', permission: 'upload_plans' },
+  { label: 'Gestión de Manuales', icon: <MenuBook />, path: '/manuals', permission: 'manage_manuals' },
   { label: 'Búsqueda', icon: <Search />, path: '/search' },
   { label: 'Usuarios', icon: <ManageAccounts />, path: '/users', permission: 'manage_users' },
 ];
@@ -110,7 +112,7 @@ const AppLayout: React.FC = () => {
                 Parque del Café
               </Typography>
               <Typography variant="caption" color="text.secondary" lineHeight={1}>
-                Planos Eléctricos
+                Documentos
               </Typography>
             </Box>
           </Box>
@@ -295,7 +297,7 @@ const AppLayout: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
               <ElectricBolt sx={{ color: 'secondary.main', fontSize: 18 }} />
               <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-                {visibleNavItems.find(n => isActive(n.path))?.label || 'Sistema de Planos Eléctricos'}
+                {visibleNavItems.find(n => isActive(n.path))?.label || 'Sistema de Gestión de documentos'}
               </Typography>
             </Box>
 

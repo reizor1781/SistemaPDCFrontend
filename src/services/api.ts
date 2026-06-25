@@ -1,7 +1,7 @@
-import { Attraction, ElectricalPlan, MaintenanceRecord, User } from '../types';
+import { Attraction, AttractionManual, ElectricalPlan, MaintenanceRecord, User } from '../types';
 import { mockAttractions, mockMaintenanceRecords, mockPlans } from '../data/mockData';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'https://parque-cafe-api.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:4000/api';
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 type ApiResponse<T> = { data: T };
@@ -54,7 +54,10 @@ const enrichAttraction = (attraction: Partial<Attraction> & { id: string }): Att
     height_m: attraction.height_m ?? local?.height_m ?? 0,
     duration_min: attraction.duration_min ?? local?.duration_min ?? 0,
     total_plans: attraction.total_plans ?? local?.total_plans ?? 0,
+    total_manuals: attraction.total_manuals ?? local?.total_manuals ?? 0,
     pending_docs: attraction.pending_docs ?? local?.pending_docs ?? 0,
+    pending_plans: attraction.pending_plans ?? local?.pending_plans ?? 0,
+    pending_manuals: attraction.pending_manuals ?? local?.pending_manuals ?? 0,
     last_maintenance: attraction.last_maintenance ?? local?.last_maintenance ?? new Date().toISOString(),
     next_maintenance: attraction.next_maintenance ?? local?.next_maintenance ?? new Date().toISOString(),
     technical_specs: {
@@ -85,6 +88,24 @@ const enrichPlan = (plan: Partial<ElectricalPlan> & { id: string }): ElectricalP
     author: plan.author ?? local?.author ?? 'Servidor',
   } as ElectricalPlan;
 };
+
+const enrichManual = (manual: Partial<AttractionManual> & { id: string }): AttractionManual => ({
+  ...manual,
+  attraction_id: manual.attraction_id ?? '',
+  manual_number: manual.manual_number ?? '',
+  title: manual.title ?? 'Manual sin titulo',
+  category: manual.category ?? 'technical',
+  status: manual.status ?? 'active',
+  current_version: manual.current_version ?? 'Rev. 0',
+  author: manual.author ?? 'Servidor',
+  file_url: manual.file_url ?? '',
+  file_size_kb: manual.file_size_kb ?? 0,
+  pages: manual.pages ?? 1,
+  tags: manual.tags ?? [],
+  description: manual.description ?? '',
+  created_date: manual.created_date ?? new Date().toISOString(),
+  updated_date: manual.updated_date ?? new Date().toISOString(),
+} as AttractionManual);
 
 export const resolveFileUrl = (fileUrl?: string) => {
   if (!fileUrl) return '';
@@ -180,6 +201,46 @@ export const api = {
 
   async deletePlan(id: string) {
     await request<ApiResponse<void>>(`/plans/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getManuals(attractionId?: string) {
+    const query = attractionId ? `?attraction_id=${encodeURIComponent(attractionId)}` : '';
+    const response = await request<ApiResponse<Array<Partial<AttractionManual> & { id: string }>>>(`/manuals${query}`);
+    return response.data.map(enrichManual);
+  },
+
+  async getManual(id: string) {
+    const response = await request<ApiResponse<Partial<AttractionManual> & { id: string }>>(`/manuals/${id}`);
+    return enrichManual(response.data);
+  },
+
+  async uploadManual(data: Partial<AttractionManual>, file: File) {
+    const formData = new FormData();
+    formData.set('file', file);
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) formData.set(key, String(value));
+    });
+
+    const response = await request<ApiResponse<Partial<AttractionManual> & { id: string }>>('/manuals', {
+      method: 'POST',
+      body: formData,
+    });
+
+    return enrichManual(response.data);
+  },
+
+  async updateManual(id: string, data: Partial<AttractionManual>) {
+    const response = await request<ApiResponse<Partial<AttractionManual> & { id: string }>>(`/manuals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return enrichManual(response.data);
+  },
+
+  async deleteManual(id: string) {
+    await request<ApiResponse<void>>(`/manuals/${id}`, {
       method: 'DELETE',
     });
   },

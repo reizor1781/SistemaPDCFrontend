@@ -24,12 +24,10 @@ export interface AuthState {
 // PARK AREAS
 // ========================
 export type ParkArea =
-  | 'Zona Aventura'
-  | 'Zona Infantil'
-  | 'Zona Cultural'
-  | 'Zona Extrema'
-  | 'Zona Familiar'
-  | 'Servicios Generales';
+  | 'Vertigo'
+  | 'Infantiles'
+  | 'Familiares'
+  | 'Acuaticas';
 
 // ========================
 // ATTRACTIONS
@@ -106,7 +104,10 @@ export interface Attraction {
   duration_min: number;
   technical_specs: TechnicalSpecs;
   total_plans: number;
+  total_manuals: number;
   pending_docs: number;
+  pending_plans?: number;
+  pending_manuals?: number;
   last_maintenance: string;
   next_maintenance: string;
 }
@@ -167,6 +168,27 @@ export interface ElectricalPlan {
   pages: number;
   revisions: PlanRevision[];
   comments: Comment[];
+  tags: string[];
+  description: string;
+}
+
+export type ManualCategory = 'operation' | 'maintenance';
+export type ManualStatus = 'active' | 'draft' | 'review' | 'obsolete';
+
+export interface AttractionManual {
+  id: string;
+  attraction_id: string;
+  manual_number: string;
+  title: string;
+  category: ManualCategory;
+  status: ManualStatus;
+  current_version: string;
+  created_date: string;
+  updated_date: string;
+  author: string;
+  file_url: string;
+  file_size_kb: number;
+  pages: number;
   tags: string[];
   description: string;
 }

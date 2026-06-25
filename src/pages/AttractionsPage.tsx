@@ -52,18 +52,16 @@ const statusConfig: Record<AttractionStatus, { color: string; label: string; dot
 };
 
 const areaColors: Record<string, string> = {
-  'Zona Extrema': '#d32f2f',
-  'Zona Aventura': '#f57c00',
-  'Zona Familiar': '#388e3c',
-  'Zona Infantil': '#7b1fa2',
-  'Zona Cultural': '#1565c0',
-  'Servicios Generales': '#455a64',
+  'Vertigo': '#d32f2f',
+  'Infantiles': '#f57c00',
+  'Familiares': '#388e3c',
+  'Acuaticas': '#1565c0',
 };
 
 const emptyForm = {
   name: '',
   code: '',
-  area: 'Zona Aventura' as ParkArea,
+  area: 'Familiares' as ParkArea,
   status: 'operational' as AttractionStatus,
   description: '',
   manufacturer: '',
@@ -78,15 +76,14 @@ const emptyForm = {
   height_m: 0,
   duration_min: 0,
   total_plans: 0,
+  total_manuals: 0,
 };
 
 const parkAreas: ParkArea[] = [
-  'Zona Aventura',
-  'Zona Infantil',
-  'Zona Cultural',
-  'Zona Extrema',
-  'Zona Familiar',
-  'Servicios Generales',
+  'Vertigo',
+  'Infantiles',
+  'Familiares',
+  'Acuaticas',
 ];
 
 // Simple SVG attraction icons as placeholder images
@@ -101,8 +98,10 @@ const AttractionCard: React.FC<{
   const isDark = theme.palette.mode === 'dark';
   const sCfg = statusConfig[attraction.status];
   const areaColor = areaColors[attraction.area] || '#3d7a35';
-  const docPercent = attraction.total_plans > 0
-    ? Math.round(((attraction.total_plans - attraction.pending_docs) / attraction.total_plans) * 100)
+  const totalExpected = attraction.total_plans + (attraction.total_manuals || 0);
+  const uploadedDocs = totalExpected - attraction.pending_docs;
+  const docPercent = totalExpected > 0
+    ? Math.max(0, Math.min(100, Math.round((uploadedDocs / totalExpected) * 100)))
     : 0;
 
   const iconMap: Record<string, string> = {
@@ -265,6 +264,12 @@ const AttractionCard: React.FC<{
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Description sx={{ fontSize: 14, color: 'info.main' }} />
+              <Typography variant="caption" color="text.secondary">{attraction.total_manuals} manuales</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <AccessTime sx={{ fontSize: 14, color: 'text.secondary' }} />
               <Typography variant="caption" color="text.secondary">{attraction.duration_min} min</Typography>
             </Box>
@@ -373,6 +378,7 @@ const AttractionsPage: React.FC = () => {
       height_m: attraction.height_m,
       duration_min: attraction.duration_min,
       total_plans: attraction.total_plans,
+      total_manuals: attraction.total_manuals,
     });
     setImageFile(null);
     // Mostrar imagen actual de la atraccion como preview
@@ -403,6 +409,7 @@ const AttractionsPage: React.FC = () => {
     height_m: Number(formData.height_m),
     duration_min: Number(formData.duration_min),
     total_plans: Number(formData.total_plans),
+    total_manuals: Number(formData.total_manuals),
     technical_specs: {
       manufacturer: formData.manufacturer || 'Sin registrar',
       model: formData.model || 'Sin registrar',
@@ -438,8 +445,12 @@ const AttractionsPage: React.FC = () => {
     }
   };
 
-  const uploadedPlansCount = editing ? Math.max(editing.total_plans - editing.pending_docs, 0) : 0;
-  const calculatedPendingDocs = Math.max(Number(formData.total_plans) - uploadedPlansCount, 0);
+  const uploadedPlansCount = editing ? Math.max(editing.total_plans - (editing.pending_plans || 0), 0) : 0;
+  const uploadedManualsCount = editing ? Math.max((editing.total_manuals || 0) - (editing.pending_manuals || 0), 0) : 0;
+  const calculatedPendingDocs = Math.max(
+    (Number(formData.total_plans) + Number(formData.total_manuals)) - (uploadedPlansCount + uploadedManualsCount),
+    0,
+  );
 
   const deleteAttraction = async (attraction: Attraction) => {
     const confirmed = window.confirm(`Eliminar ${attraction.name}?`);
@@ -686,6 +697,7 @@ const AttractionsPage: React.FC = () => {
               ['height_m', 'Altura (m)'],
               ['duration_min', 'Duracion (min)'],
               ['total_plans', 'Total planos'],
+              ['total_manuals', 'Total manuales'],
             ].map(([key, label]) => (
               <Grid key={key} item xs={12} sm={6} md={4}>
                 <TextField
